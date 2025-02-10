@@ -1,31 +1,32 @@
-extern crate rustyline;
+use std::io::{self, Write};
 
-use rustyline::error::ReadlineError;
-use rustyline::Editor;
-
-fn main() {
-    // `()` can be used when no completer is required
-    let mut rl = Editor::<(), rustyline::history::DefaultHistory>::new().unwrap();
-    if rl.load_history(".mal-history").is_err() {
-        eprintln!("No previous history.");
-    }
-
+fn main() -> io::Result<()> {
+    let mut input = String::new();
     loop {
-        let readline = rl.readline("user> ");
-        match readline {
-            Ok(line) => {
-                let _ = rl.add_history_entry(&line);
-                rl.save_history(".mal-history").unwrap();
-                if !line.is_empty() {
-                    println!("{}", line);
-                }
-            }
-            Err(ReadlineError::Interrupted) => continue,
-            Err(ReadlineError::Eof) => break,
-            Err(err) => {
-                println!("Error: {:?}", err);
-                break;
-            }
+        print!("user> ");
+        io::stdout().flush()?;
+
+        io::stdin().read_line(&mut input)?;
+
+        if !input.is_empty() {
+            println!("{}", rep(&input));
         }
+        input.clear();
     }
+}
+
+fn rep(instr: &str) -> &str {
+    print(eval(read(instr)))
+}
+
+fn read(instr: &str) -> &str {
+    instr
+}
+
+fn eval(instr: &str) -> &str {
+    instr
+}
+
+fn print(instr: &str) -> &str {
+    instr
 }
