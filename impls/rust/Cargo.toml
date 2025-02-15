@@ -4,11 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+anyhow = "1.0.95"
 regex = "1.11.1"
-
-[[bin]]
-name = "step0_repl"
-path = "step0_repl.rs"
 
 [[bin]]
 name = "step1_read_print"

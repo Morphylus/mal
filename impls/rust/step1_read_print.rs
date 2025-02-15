@@ -1,4 +1,8 @@
 use std::io::{self, Write};
+
+use printer::pr_str;
+use reader::read_str;
+use types::Mal;
 mod printer;
 mod reader;
 mod types;
@@ -18,18 +22,18 @@ fn main() -> io::Result<()> {
     }
 }
 
-fn rep(instr: &str) -> &str {
+fn rep(instr: &str) -> String {
     print(eval(read(instr)))
 }
 
-fn read(instr: &str) -> &str {
+fn read(instr: &str) -> Mal {
+    read_str(instr)
+}
+
+fn eval(instr: Mal) -> Mal {
     instr
 }
 
-fn eval(instr: &str) -> &str {
-    instr
-}
-
-fn print(instr: &str) -> &str {
-    instr
+fn print(instr: Mal) -> String {
+    pr_str(instr)
 }

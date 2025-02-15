@@ -1,12 +1,6 @@
-use std::num::ParseIntError;
-
 use regex::Regex;
 
-pub enum MalType {
-    MalList(Vec<MalType>),
-    MalInteger(i32),
-    MalSymbol(String),
-}
+use crate::types::Mal;
 
 pub struct Reader<'a> {
     pub position: usize,
@@ -29,67 +23,65 @@ impl<'a> Reader<'a> {
         None
     }
 
-    pub fn peek(&mut self) -> &Token {
-        &self.tokens[self.position]
+    pub fn peek(&mut self) -> Option<&Token> {
+        if let Some(token) = self.tokens.get(self.position) {
+            return Some(token);
+        }
+        return None;
     }
-}
-
-pub struct Token<'a>(&'a str);
-
-fn read_str(input: &str) {
-    let tokens = tokenize(input);
-
-    let mut reader = Reader::new(tokens);
-    read_form(&mut reader);
-}
-
-fn tokenize(input: &str) -> Vec<Token> {
-    let re = Regex::new(r#"[\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"?|;.*|[^\s\[\]{}('"`,;)]*)"#)
-        .unwrap();
-    let tokens: Vec<Token> = re.find_iter(input).map(|m| Token(m.as_str())).collect();
-    tokens
-}
-
-fn read_form(reader: &mut Reader) -> MalType {
-    let res = match reader.peek() {
-        Token("(") => read_list(reader),
-        _ => read_atom(reader).unwrap(),
-    };
-    res
-}
-
-fn read_list(reader: &mut Reader) -> MalType {
-    let mut list = vec![];
-    while let Some(token) = reader.next() {
-        let res = match token {
-            Token(")") => return MalType::MalList(list),
-            _ => read_form(reader),
-        };
-        list.push(res);
-    }
-    MalType::MalList(list)
 }
 
 #[derive(Debug)]
-enum ReadAtomError {
-    ParseInt(ParseIntError),
-    UnexpectedEOF,
+pub struct Token<'a>(&'a str);
+
+pub fn read_str(input: &str) -> Mal {
+    let tokens = tokenize(input);
+
+    let mut reader = Reader::new(tokens);
+    read_form(&mut reader)
 }
 
-impl From<ParseIntError> for ReadAtomError {
-    fn from(value: ParseIntError) -> Self {
-        ReadAtomError::ParseInt(value)
-    }
-}
-
-fn read_atom(reader: &mut Reader) -> Result<MalType, ReadAtomError> {
-    if let Some(Token(content)) = reader.next() {
-        if let Ok(parsed) = content.parse::<i32>() {
-            return Ok(MalType::MalInteger(parsed));
-        } else {
-            return Ok(MalType::MalSymbol(content.to_string()));
+fn tokenize(input: &str) -> Vec<Token> {
+    let mut tokens = vec![];
+    let re =
+        Regex::new(r###"[\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"?|;.*|[^\s\[\]{}('"`,;)]+)"###)
+            .unwrap();
+    for capture in re.captures_iter(input) {
+        if let Some(m) = capture.get(1) {
+            tokens.push(Token(m.as_str()));
         }
-    } else {
-        return Err(ReadAtomError::UnexpectedEOF);
     }
+
+    tokens
+}
+
+fn read_form(reader: &mut Reader) -> Mal {
+    match reader.peek() {
+        Some(Token("(")) => read_list(reader),
+        _ => read_atom(reader).unwrap(),
+    }
+}
+
+fn read_list(reader: &mut Reader) -> Mal {
+    let mut list = vec![];
+    reader.next();
+    while let Some(Token(c)) = reader.peek() {
+        if *c == ")" {
+            break;
+        }
+        list.push(read_form(reader));
+    }
+    reader.next();
+    Mal::List(list)
+}
+
+fn read_atom(reader: &mut Reader) -> Option<Mal> {
+    if let Some(Token(content)) = reader.next() {
+        if let Ok(num) = content.parse::<i32>() {
+            return Some(Mal::Int(num));
+        }
+
+        return Some(Mal::Sym(content.to_string()));
+    }
+    None
 }

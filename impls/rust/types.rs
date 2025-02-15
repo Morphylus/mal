@@ -1,6 +1,6 @@
-#[derive(Clone)]
-pub enum MalType {
-    MalList(Vec<MalType>),
-    MalInteger(i32),
-    MalSymbol(String),
+#[derive(Clone, Debug)]
+pub enum Mal {
+    List(Vec<Mal>),
+    Int(i32),
+    Sym(String),
 }

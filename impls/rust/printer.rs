@@ -1,8 +1,8 @@
-use crate::types::MalType;
+use crate::types::Mal;
 
-fn pr_str(tree: MalType) -> String {
+pub fn pr_str(tree: Mal) -> String {
     match tree {
-        MalType::MalList(list) => {
+        Mal::List(list) => {
             let mut res = String::from("(");
             let joined = list
                 .iter()
@@ -13,7 +13,7 @@ fn pr_str(tree: MalType) -> String {
             res.push_str(")");
             return res;
         }
-        MalType::MalInteger(number) => return number.to_string(),
-        MalType::MalSymbol(sym) => return sym,
+        Mal::Int(number) => return number.to_string(),
+        Mal::Sym(sym) => return sym,
     }
 }
