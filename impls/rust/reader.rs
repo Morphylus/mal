@@ -1,3 +1,4 @@
+use anyhow::Result;
 use regex::Regex;
 
 use crate::types::Mal;
@@ -36,8 +37,8 @@ pub struct Token<'a>(&'a str);
 
 pub fn read_str(input: &str) -> Mal {
     let tokens = tokenize(input);
-
     let mut reader = Reader::new(tokens);
+
     read_form(&mut reader)
 }
 
@@ -81,7 +82,12 @@ fn read_atom(reader: &mut Reader) -> Option<Mal> {
             return Some(Mal::Int(num));
         }
 
-        return Some(Mal::Sym(content.to_string()));
+        match *content {
+            "true" => return Some(Mal::True),
+            "false" => return Some(Mal::False),
+            "nil" => return Some(Mal::Nil),
+            _ => return Some(Mal::Sym(content.to_string())),
+        }
     }
     None
 }
