@@ -70,11 +70,12 @@ fn read_list(reader: &mut Reader) -> Result<Mal> {
     let mut list = vec![];
     while let Some(Token(c)) = reader.peek() {
         if *c == ")" {
+            reader.next();
             return Ok(Mal::List(list));
         }
         list.push(read_form(reader)?);
     }
-    Err(anyhow!("Brackets not matched!"))
+    Err(anyhow!("unbalanced"))
 }
 
 fn read_atom(reader: &mut Reader) -> Result<Mal> {

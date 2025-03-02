@@ -21,8 +21,8 @@ fn main() -> io::Result<()> {
                 Ok(output) => {
                     println!("{}", output)
                 }
-                Err(_) => {
-                    println!("unbalanced")
+                Err(err) => {
+                    println!("{}", err)
                 }
             }
         }
