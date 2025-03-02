@@ -15,5 +15,8 @@ pub fn pr_str(tree: Mal) -> String {
         }
         Mal::Int(number) => return number.to_string(),
         Mal::Sym(sym) => return sym,
+        Mal::True => return "true".to_string(),
+        Mal::False => return "false".to_string(),
+        Mal::Nil => return "Nil".to_string(),
     }
 }

@@ -1,11 +1,11 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use regex::Regex;
 
 use crate::types::Mal;
 
 pub struct Reader<'a> {
-    pub position: usize,
-    pub tokens: Vec<Token<'a>>,
+    position: usize,
+    tokens: Vec<Token<'a>>,
 }
 
 impl<'a> Reader<'a> {
@@ -35,59 +35,60 @@ impl<'a> Reader<'a> {
 #[derive(Debug)]
 pub struct Token<'a>(&'a str);
 
-pub fn read_str(input: &str) -> Mal {
-    let tokens = tokenize(input);
+pub fn read_str(input: &str) -> Result<Mal> {
+    let tokens = tokenize(input)?;
     let mut reader = Reader::new(tokens);
 
-    read_form(&mut reader)
+    match read_form(&mut reader) {
+        Ok(res) => Ok(res),
+        Err(err) => Err(err),
+    }
 }
 
-fn tokenize(input: &str) -> Vec<Token> {
+fn tokenize(input: &str) -> Result<Vec<Token>> {
     let mut tokens = vec![];
     let re =
-        Regex::new(r###"[\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"?|;.*|[^\s\[\]{}('"`,;)]+)"###)
-            .unwrap();
+        Regex::new(r###"[\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"?|;.*|[^\s\[\]{}('"`,;)]+)"###)?;
     for capture in re.captures_iter(input) {
         if let Some(m) = capture.get(1) {
             tokens.push(Token(m.as_str()));
         }
     }
 
-    tokens
+    Ok(tokens)
 }
 
-fn read_form(reader: &mut Reader) -> Mal {
+fn read_form(reader: &mut Reader) -> Result<Mal> {
     match reader.peek() {
-        Some(Token("(")) => read_list(reader),
-        _ => read_atom(reader).unwrap(),
+        Some(Token("(")) => Ok(read_list(reader)?),
+        _ => Ok(read_atom(reader).unwrap()),
     }
 }
 
-fn read_list(reader: &mut Reader) -> Mal {
-    let mut list = vec![];
+fn read_list(reader: &mut Reader) -> Result<Mal> {
     reader.next();
+    let mut list = vec![];
     while let Some(Token(c)) = reader.peek() {
         if *c == ")" {
-            break;
+            return Ok(Mal::List(list));
         }
-        list.push(read_form(reader));
+        list.push(read_form(reader)?);
     }
-    reader.next();
-    Mal::List(list)
+    Err(anyhow!("Brackets not matched!"))
 }
 
-fn read_atom(reader: &mut Reader) -> Option<Mal> {
+fn read_atom(reader: &mut Reader) -> Result<Mal> {
     if let Some(Token(content)) = reader.next() {
         if let Ok(num) = content.parse::<i32>() {
-            return Some(Mal::Int(num));
+            return Ok(Mal::Int(num));
         }
 
         match *content {
-            "true" => return Some(Mal::True),
-            "false" => return Some(Mal::False),
-            "nil" => return Some(Mal::Nil),
-            _ => return Some(Mal::Sym(content.to_string())),
+            "true" => return Ok(Mal::True),
+            "false" => return Ok(Mal::False),
+            "nil" => return Ok(Mal::Nil),
+            _ => return Ok(Mal::Sym(content.to_string())),
         }
     }
-    None
+    Ok(Mal::Nil)
 }

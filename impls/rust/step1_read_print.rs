@@ -1,3 +1,4 @@
+use anyhow::Result;
 use std::io::{self, Write};
 
 use printer::pr_str;
@@ -16,17 +17,26 @@ fn main() -> io::Result<()> {
         io::stdin().read_line(&mut input)?;
 
         if !input.is_empty() {
-            println!("{}", rep(&input));
+            match rep(&input) {
+                Ok(output) => {
+                    println!("{}", output)
+                }
+                Err(_) => {
+                    println!("unbalanced")
+                }
+            }
         }
         input.clear();
     }
 }
 
-fn rep(instr: &str) -> String {
-    print(eval(read(instr)))
+fn rep(instr: &str) -> Result<String> {
+    let tokens = read(instr)?;
+    let res = eval(tokens);
+    Ok(print(res))
 }
 
-fn read(instr: &str) -> Mal {
+fn read(instr: &str) -> Result<Mal> {
     read_str(instr)
 }
 
